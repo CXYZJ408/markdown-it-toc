@@ -2,10 +2,10 @@
 
 'use strict';
 
-module.exports = function(md) {
+module.exports = function (md) {
 
     var TOC_REGEXP = /^@\[toc\](?:\((?:\s+)?([^\)]+)(?:\s+)?\)?)?(?:\s+?)?$/im;
-    var TOC_DEFAULT = 'Table of Contents';
+    var TOC_DEFAULT = '目录';
     var gstate;
 
     function toc(state, silent) {
@@ -18,10 +18,10 @@ module.exports = function(md) {
         var token;
 
         // trivial rejections
-        if (state.src.charCodeAt(state.pos) !== 0x40 /* @ */ ) {
+        if (state.src.charCodeAt(state.pos) !== 0x40 /* @ */) {
             return false;
         }
-        if (state.src.charCodeAt(state.pos + 1) !== 0x5B /* [ */ ) {
+        if (state.src.charCodeAt(state.pos + 1) !== 0x5B /* [ */) {
             return false;
         }
 
@@ -29,7 +29,7 @@ module.exports = function(md) {
         if (!match) {
             return false;
         }
-        match = match.filter(function(m) {
+        match = match.filter(function (m) {
             return m;
         });
         if (match.length < 1) {
@@ -43,7 +43,7 @@ module.exports = function(md) {
         token.markup = '@[toc]';
 
         token = state.push('toc_body', '', 0);
-        var label = state.env.tocHeader || TOC_DEFAULT;
+        var label = TOC_DEFAULT;
         if (match.length > 1) {
             label = match.pop();
         }
@@ -62,31 +62,32 @@ module.exports = function(md) {
 
         return true;
     }
-    var makeSafe = function(label) {
+
+    var makeSafe = function (label) {
         return label.replace(/[^\w\s]/gi, '').split(' ').join('_');
     };
 
-    md.renderer.rules.heading_open = function(tokens, index) {
+    md.renderer.rules.heading_open = function (tokens, index) {
         var level = tokens[index].tag;
         var label = tokens[index + 1];
         if (label.type === 'inline') {
             var anchor = makeSafe(label.content) + '_' + label.map[0];
-            return '<' + level + '><a id="' + anchor + '"></a>';
+            return '<' + level + ' id = "' + anchor + '">';
         } else {
             return '</h1>';
         }
     };
 
-    md.renderer.rules.toc_open = function(tokens, index) {
+    md.renderer.rules.toc_open = function (tokens, index) {
         return '';
     };
 
-    md.renderer.rules.toc_close = function(tokens, index) {
+    md.renderer.rules.toc_close = function (tokens, index) {
         return '';
     };
 
-    md.renderer.rules.toc_body = function(tokens, index) {
-        // Wanted to avoid linear search through tokens here, 
+    md.renderer.rules.toc_body = function (tokens, index) {
+        // Wanted to avoid linear search through tokens here,
         // but this seems the only reliable way to identify headings
         var headings = [];
         var gtokens = gstate.tokens;
@@ -107,7 +108,7 @@ module.exports = function(md) {
         }
 
         var indent = 0;
-        var list = headings.map(function(heading) {
+        var list = headings.map(function (heading) {
             var res = [];
             if (heading.level > indent) {
                 var ldiff = (heading.level - indent);
@@ -129,7 +130,7 @@ module.exports = function(md) {
         return '<h3>' + tokens[index].content + '</h3>' + list.join('') + new Array(indent + 1).join('</ul>');
     };
 
-    md.core.ruler.push('grab_state', function(state) {
+    md.core.ruler.push('grab_state', function (state) {
         gstate = state;
     });
     md.inline.ruler.after('emphasis', 'toc', toc);
